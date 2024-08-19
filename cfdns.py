@@ -64,8 +64,18 @@ def create_recordset(zone_id, name, records):
 
 
 def get_best_ips():
-    ips = requests.get("https://ipdb.api.030101.xyz/?type=bestproxy&country=false").text
-    return ips.split("\n")
+    resp = requests.get("https://ipdb.api.030101.xyz/?type=bestproxy&country=false").text
+    ips = []
+    for ip in resp.split("\n"):
+        url = "http://" + ip
+        headers = {"host": "www.cloudflare.com"}
+        try:
+            res = requests.get(url=url, headers=headers)
+            if res.status_code == 200:
+                ips.append(ip)
+        except:
+            continue
+    return ips
 
 
 if __name__ == "__main__":
