@@ -94,6 +94,8 @@ if __name__ == "__main__":
 
     if recordset is not None:
         for record in recordset.records:
+            if len(proxy_ips) > 8:
+                break
             proxy_ips.add(record)
 
     best_ips = filter_best_ips(proxy_ips)
