@@ -63,37 +63,44 @@ def create_recordset(zone_id, name, records):
     return response
 
 
-def get_best_ips():
+def get_proxy_ips():
     resp = requests.get("https://ipdb.api.030101.xyz/?type=bestproxy&country=false").text
-    ips = []
+    ips = set()
     for ip in resp.split("\n"):
+        ips.add(ip)
+    return ips
+
+
+def filter_best_ips(ips):
+    result = []
+    for ip in ips:
         url = "http://" + ip
         headers = {"host": "www.cloudflare.com"}
         try:
             res = requests.get(url=url, headers=headers)
             if res.status_code == 200:
-                ips.append(ip)
+                result.append(ip)
         except:
             continue
-    return ips
+    return result
 
 
 if __name__ == "__main__":
 
-    try:
+    proxy_ips = get_proxy_ips()
 
-        ips = get_best_ips()
+    zone = get_zone(zone_name)
+    recordset = get_recordset(zone.id, recordset_name)
 
-        zone = get_zone(zone_name)
-        recordset = get_recordset(zone.id, recordset_name)
+    if recordset is not None:
+        for record in recordset.records:
+            proxy_ips.add(record)
 
-        if recordset is None:
-            create_recordset(zone.id, recordset_name, ips)
-            print(f"创建记录 {ips}")
-        else:
-            update_recordset(recordset, ips)
-            print(f"更新记录 {ips}")
+    best_ips = filter_best_ips(proxy_ips)
 
-
-    except:
-        print("执行出错")
+    if recordset is None:
+        create_recordset(zone.id, recordset_name, best_ips)
+        print(f"创建记录 {best_ips}")
+    else:
+        update_recordset(recordset, best_ips)
+        print(f"更新记录 {best_ips}")
