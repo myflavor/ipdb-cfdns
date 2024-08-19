@@ -22,5 +22,11 @@ jobs:
         pip install requests PyYAML
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Run update
+      env:
+        CLOUD_SDK_AK: ${{ secrets.CLOUD_SDK_AK }}
+        CLOUD_SDK_SK: ${{ secrets.CLOUD_SDK_SK }}
+        CLIENT_REGION: ${{ secrets.CLIENT_REGION }}
+        ZONE_NAME: ${{ secrets.ZONE_NAME }}
+        RECORDSET_NAME: ${{ secrets.RECORDSET_NAME }}
       run: |
         python cfdns.py
