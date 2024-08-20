@@ -112,7 +112,12 @@ if __name__ == "__main__":
 
     best_ips_info = sorted([ip for ip in ips_info if ip['status']], key=lambda x: x['elapsed_time'])[:8]
 
-    best_ips = [ip['ip'] for ip in best_ips_info]
+    best_ips = []
+
+    for ip_info in best_ips_info:
+        if len(best_ips) > 8:
+            break
+        best_ips.append(ip_info['ip'])
 
     if recordset is None:
         create_recordset(zone.id, recordset_name, best_ips)
