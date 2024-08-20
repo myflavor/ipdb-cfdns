@@ -72,21 +72,25 @@ def get_proxy_ips():
     return ips
 
 
-def filter_best_ips(ips):
-    result = []
-    for ip in ips:
-        url = "http://" + ip
-        headers = {"host": "www.cloudflare.com"}
-        try:
-            start_time = time_ns()
-            res = requests.get(url=url, headers=headers)
-            end_time = time_ns()
-            elapsed_time = (end_time - start_time) / 1_000_000
-            if elapsed_time < 1000 and res.status_code == 200:
-                result.append(ip)
-        except:
-            continue
-    return result
+def get_ip_info(ip):
+    url = "http://" + ip
+    headers = {"host": "www.cloudflare.com"}
+    try:
+        start_time = time_ns()
+        res = requests.get(url=url, headers=headers)
+        end_time = time_ns()
+        elapsed_time = (end_time - start_time) / 1_000_000
+        return {
+            'ip': ip,
+            'status': res.status_code == 200,
+            'elapsed_time': elapsed_time
+        }
+    except:
+        return {
+            'ip': ip,
+            'status': False,
+            'elapsed_time': 9999
+        }
 
 
 if __name__ == "__main__":
@@ -94,15 +98,21 @@ if __name__ == "__main__":
     proxy_ips = get_proxy_ips()
 
     zone = get_zone(zone_name)
+
     recordset = get_recordset(zone.id, recordset_name)
 
     if recordset is not None:
         for record in recordset.records:
-            if len(proxy_ips) > 8:
-                break
             proxy_ips.add(record)
 
-    best_ips = filter_best_ips(proxy_ips)
+    ips_info = []
+
+    for proxy_ip in proxy_ips:
+        ips_info.append(get_ip_info(proxy_ip))
+
+    best_ips_info = sorted([ip for ip in ips_info if ip['status']], key=lambda x: x['elapsed_time'])[:8]
+
+    best_ips = [ip['ip'] for ip in best_ips_info]
 
     if recordset is None:
         create_recordset(zone.id, recordset_name, best_ips)
