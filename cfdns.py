@@ -82,7 +82,7 @@ def get_ip_info(ip):
         elapsed_time = (end_time - start_time) / 1_000_000
         return {
             'ip': ip,
-            'status': res.status_code == 200,
+            'status': elapsed_time < 1500 and res.status_code == 200,
             'elapsed_time': elapsed_time
         }
     except:
