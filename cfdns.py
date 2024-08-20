@@ -68,7 +68,8 @@ def get_proxy_ips():
     resp = requests.get("https://ipdb.api.030101.xyz/?type=bestproxy&country=false").text
     ips = set()
     for ip in resp.split("\n"):
-        ips.add(ip)
+        if ip.startswith("8.") or ip.startswith("47."):
+            ips.add(ip)
     return ips
 
 
