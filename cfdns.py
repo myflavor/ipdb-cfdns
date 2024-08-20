@@ -82,7 +82,7 @@ def filter_best_ips(ips):
             res = requests.get(url=url, headers=headers)
             end_time = time_ns()
             elapsed_time = (end_time - start_time) / 1_000_000
-            if res.status_code == 200 and elapsed_time < 1000:
+            if elapsed_time < 1000 and res.status_code == 200:
                 result.append(ip)
         except:
             continue
