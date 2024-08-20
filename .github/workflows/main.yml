@@ -30,3 +30,4 @@ jobs:
         RECORDSET_NAME: ${{ secrets.RECORDSET_NAME }}
       run: |
         python cfdns.py
+        curl cip.cc
