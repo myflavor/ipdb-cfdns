@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import os
+from time import time_ns
 
 import requests
 from huaweicloudsdkcore.auth.credentials import BasicCredentials
@@ -77,8 +78,11 @@ def filter_best_ips(ips):
         url = "http://" + ip
         headers = {"host": "www.cloudflare.com"}
         try:
+            start_time = time_ns()
             res = requests.get(url=url, headers=headers)
-            if res.status_code == 200:
+            end_time = time_ns()
+            elapsed_time = (end_time - start_time) / 1_000_000
+            if res.status_code == 200 and elapsed_time < 1000:
                 result.append(ip)
         except:
             continue
