@@ -116,7 +116,7 @@ if __name__ == "__main__":
     best_ips = []
 
     for ip_info in best_ips_info:
-        if len(best_ips) > 12:
+        if len(best_ips) > 8:
             break
         best_ips.append(ip_info['ip'])
 
