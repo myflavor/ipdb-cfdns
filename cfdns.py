@@ -78,7 +78,7 @@ def get_ip_info(ip):
     headers = {"host": "www.cloudflare.com"}
     try:
         start_time = time_ns()
-        res = requests.get(url=url, headers=headers)
+        res = requests.get(url=url, headers=headers, timeout=5)
         end_time = time_ns()
         elapsed_time = (end_time - start_time) / 1_000_000
         # ip 响应时间
