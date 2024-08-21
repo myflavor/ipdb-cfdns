@@ -74,12 +74,13 @@ def get_proxy_ips():
     resp = requests.get("https://ipdb.api.030101.xyz/?type=proxy&country=false").text
     ips = set()
     for ip in resp.split("\n"):
-        if len(ips) > 256:
+        if len(ips) >= 256:
             break
-        country = city_reader.city(ip).country.iso_code
         organization = asn_reader.asn(ip).autonomous_system_organization
-        if country == "SG" and organization.startswith("Alibaba"):
-            ips.add(ip)
+        if organization.startswith("Alibaba"):
+            country = city_reader.city(ip).country.iso_code
+            if country == "SG" or country == "HK":
+                ips.add(ip)
     print(f'本次获取IP数量{len(ips)}个')
     return ips
 
