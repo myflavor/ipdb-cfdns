@@ -73,11 +73,12 @@ def get_proxy_ips():
     resp = requests.get("https://ipdb.api.030101.xyz/?type=proxy&country=false").text
     ips = set()
     for ip in resp.split("\n"):
-        if len(ips) > 192:
+        if len(ips) > 256:
             break
         response = reader.city(ip)
-        if response.country.iso_code == "HK":
+        if response.country.iso_code == "HK" or response.country.iso_code == "SG":
             ips.add(ip)
+    print(f'本次获取IP数量{len(ips)}个')
     return ips
 
 
@@ -106,7 +107,9 @@ def get_ip_info(ip):
 
     latency /= test_times
 
-    print(f"请求{ip}响应时间{latency}ms")
+    response = reader.city(ip)
+
+    print(f"请求 {response.country.iso_code} {ip} 响应时间 {latency}ms")
 
     return {
         'ip': ip,
@@ -142,5 +145,7 @@ if __name__ == "__main__":
 
     if recordset is None:
         create_recordset(zone.id, recordset_name, best_ips)
+        print(f"创建记录 {best_ips}")
     else:
         update_recordset(recordset, best_ips)
+        print(f"更新记录 {best_ips}")
