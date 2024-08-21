@@ -82,23 +82,35 @@ def get_proxy_ips():
 def get_ip_info(ip):
     url = "http://" + ip
     headers = {"host": "www.cloudflare.com"}
-    try:
-        start_time = time_ns()
-        res = requests.get(url=url, headers=headers, timeout=1)
-        end_time = time_ns()
-        elapsed_time = (end_time - start_time) / 1_000_000
-        print(f"请求{ip}耗时{elapsed_time}ms")
-        return {
-            'ip': ip,
-            'status': res.status_code == 200,
-            'elapsed_time': elapsed_time
-        }
-    except:
-        return {
-            'ip': ip,
-            'status': False,
-            'elapsed_time': 9999
-        }
+
+    latency = 0
+    test_times = 2
+    for _ in range(test_times):
+        try:
+            start_time = time_ns()
+            res = requests.get(url=url, headers=headers, timeout=1)
+            end_time = time_ns()
+            elapsed_time = int((end_time - start_time) / 1_000_000)
+
+            if res.status_code == 200:
+                latency += elapsed_time
+            else:
+                raise Exception
+        except:
+            return {
+                'ip': ip,
+                'status': False
+            }
+
+    latency /= test_times
+
+    print(f"请求{ip}响应时间{latency}ms")
+
+    return {
+        'ip': ip,
+        'status': True,
+        'latency': latency
+    }
 
 
 if __name__ == "__main__":
@@ -115,13 +127,13 @@ if __name__ == "__main__":
 
     ips_info = []
 
-    with ThreadPoolExecutor(max_workers=8) as executor:
+    with ThreadPoolExecutor(max_workers=4) as executor:
         future_to_ip = {executor.submit(get_ip_info, ip): ip for ip in proxy_ips}
         for future in as_completed(future_to_ip):
             ip_info = future.result()
             ips_info.append(ip_info)
 
-    best_ips_info = sorted([ip for ip in ips_info if ip['status']], key=lambda x: x['elapsed_time'])[:8]
+    best_ips_info = sorted([ip for ip in ips_info if ip['status']], key=lambda x: x['latency'])[:8]
 
     best_ips = []
 
