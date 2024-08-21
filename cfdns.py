@@ -11,7 +11,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import geoip2.database
 
-reader = geoip2.database.Reader('GeoLite2-City.mmdb')
+city_reader = geoip2.database.Reader('GeoLite2-City.mmdb')
+asn_reader = geoip2.database.Reader('GeoLite2-ASN.mmdb')
 
 ak = os.environ["CLOUD_SDK_AK"]
 sk = os.environ["CLOUD_SDK_SK"]
@@ -75,9 +76,11 @@ def get_proxy_ips():
     for ip in resp.split("\n"):
         if len(ips) > 256:
             break
-        response = reader.city(ip)
-        if response.country.iso_code == "HK" or response.country.iso_code == "SG":
-            ips.add(ip)
+        country = city_reader.city(ip).country.iso_code
+        organization = asn_reader.asn(ip).autonomous_system_organization
+        if country == "HK" or country == "SG":
+            if organization.startswith("Alibaba"):
+                ips.add(ip)
     print(f'本次获取IP数量{len(ips)}个')
     return ips
 
@@ -107,7 +110,7 @@ def get_ip_info(ip):
 
     latency /= test_times
 
-    response = reader.city(ip)
+    response = city_reader.city(ip)
 
     print(f"请求 {response.country.iso_code} {ip} 响应时间 {latency}ms")
 
