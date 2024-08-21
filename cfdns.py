@@ -78,9 +78,8 @@ def get_proxy_ips():
             break
         country = city_reader.city(ip).country.iso_code
         organization = asn_reader.asn(ip).autonomous_system_organization
-        if country == "HK":
-            if organization.startswith("Alibaba"):
-                ips.add(ip)
+        if country == "HK" and organization.startswith("Alibaba"):
+            ips.add(ip)
     print(f'本次获取IP数量{len(ips)}个')
     return ips
 
