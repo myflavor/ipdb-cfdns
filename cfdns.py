@@ -90,7 +90,7 @@ def get_ip_info(ip):
     for _ in range(test_times):
         try:
             start_time = time_ns()
-            res = requests.get(url=url, headers=headers, timeout=1)
+            res = requests.get(url=url, headers=headers, timeout=2)
             end_time = time_ns()
             elapsed_time = int((end_time - start_time) / 1_000_000)
 
@@ -123,13 +123,9 @@ if __name__ == "__main__":
 
     recordset = get_recordset(zone.id, recordset_name)
 
-    if recordset is not None:
-        for record in recordset.records:
-            proxy_ips.add(record)
-
     ips_info = []
 
-    with ThreadPoolExecutor(max_workers=4) as executor:
+    with ThreadPoolExecutor(max_workers=8) as executor:
         future_to_ip = {executor.submit(get_ip_info, ip): ip for ip in proxy_ips}
         for future in as_completed(future_to_ip):
             ip_info = future.result()
@@ -146,7 +142,5 @@ if __name__ == "__main__":
 
     if recordset is None:
         create_recordset(zone.id, recordset_name, best_ips)
-        print(f"创建记录 {best_ips}")
     else:
         update_recordset(recordset, best_ips)
-        print(f"更新记录 {best_ips}")
