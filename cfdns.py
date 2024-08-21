@@ -73,6 +73,8 @@ def get_proxy_ips():
     resp = requests.get("https://ipdb.api.030101.xyz/?type=proxy&country=false").text
     ips = set()
     for ip in resp.split("\n"):
+        if len(ips) > 192:
+            break
         response = reader.city(ip)
         if response.country.iso_code == "HK":
             ips.add(ip)
