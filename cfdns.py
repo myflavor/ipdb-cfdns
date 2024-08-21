@@ -98,8 +98,6 @@ def get_ip_info(ip):
 
 if __name__ == "__main__":
 
-    print("开始执行")
-
     proxy_ips = get_proxy_ips()
 
     zone = get_zone(zone_name)
