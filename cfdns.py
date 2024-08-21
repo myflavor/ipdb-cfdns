@@ -81,6 +81,8 @@ def get_ip_info(ip):
         res = requests.get(url=url, headers=headers)
         end_time = time_ns()
         elapsed_time = (end_time - start_time) / 1_000_000
+        # ip 响应时间
+        print(f"请求{ip}耗时{elapsed_time}ms")
         return {
             'ip': ip,
             'status': res.status_code == 200,
