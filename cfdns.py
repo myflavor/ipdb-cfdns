@@ -7,6 +7,11 @@ import requests
 from huaweicloudsdkcore.auth.credentials import BasicCredentials
 from huaweicloudsdkdns.v2 import *
 from huaweicloudsdkdns.v2.region.dns_region import DnsRegion
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+import geoip2.database
+
+reader = geoip2.database.Reader('GeoLite2-City.mmdb')
 
 ak = os.environ["CLOUD_SDK_AK"]
 sk = os.environ["CLOUD_SDK_SK"]
@@ -65,10 +70,11 @@ def create_recordset(zone_id, name, records):
 
 
 def get_proxy_ips():
-    resp = requests.get("https://ipdb.api.030101.xyz/?type=bestproxy&country=false").text
+    resp = requests.get("https://ipdb.api.030101.xyz/?type=proxy&country=false").text
     ips = set()
     for ip in resp.split("\n"):
-        if ip.startswith("8.") or ip.startswith("47."):
+        response = reader.city(ip)
+        if response.country.iso_code == "HK":
             ips.add(ip)
     return ips
 
@@ -78,7 +84,7 @@ def get_ip_info(ip):
     headers = {"host": "www.cloudflare.com"}
     try:
         start_time = time_ns()
-        res = requests.get(url=url, headers=headers, timeout=5)
+        res = requests.get(url=url, headers=headers, timeout=1)
         end_time = time_ns()
         elapsed_time = (end_time - start_time) / 1_000_000
         # ip 响应时间
@@ -110,8 +116,11 @@ if __name__ == "__main__":
 
     ips_info = []
 
-    for proxy_ip in proxy_ips:
-        ips_info.append(get_ip_info(proxy_ip))
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        future_to_ip = {executor.submit(get_ip_info, ip): ip for ip in proxy_ips}
+        for future in as_completed(future_to_ip):
+            ip_info = future.result()
+            ips_info.append(ip_info)
 
     best_ips_info = sorted([ip for ip in ips_info if ip['status']], key=lambda x: x['elapsed_time'])[:8]
 
