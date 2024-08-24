@@ -89,7 +89,7 @@ def get_ip_info(ip):
     headers = {"host": "www.cloudflare.com"}
     try:
         start_time = time_ns()
-        res = requests.get(url=url, headers=headers, timeout=5)
+        res = requests.get(url=url, headers=headers, timeout=2)
         end_time = time_ns()
         latency = (end_time - start_time) / 1_000_000
 
