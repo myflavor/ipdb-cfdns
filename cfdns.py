@@ -69,17 +69,17 @@ def create_recordset(zone_id, name, records):
     return response
 
 
-def get_proxy_ips():
+def get_text_ips(url):
     ips = []
-    resp = requests.get("https://ipdb.api.030101.xyz/?type=bestproxy&country=false").text
+    resp = requests.get(url).text
     for ip in resp.split("\n"):
         ips.append(ip)
     return ips
 
 
-def get_hk_ips():
+def get_doh_ips(name):
     ips = []
-    resp = requests.get("https://doh.pub/dns-query?type=1&name=hk2.921219.xyz").json()
+    resp = requests.get("https://doh.pub/dns-query?type=1&name=" + name).json()
     for answer in resp["Answer"]:
         ip = answer["data"]
         ips.append(ip)
@@ -114,6 +114,7 @@ def get_ip_info(ip):
         start_time = time_ns()
         res = requests.get(url=url, headers=headers, timeout=2)
         end_time = time_ns()
+
         latency = (end_time - start_time) / 1_000_000
 
         response = city_reader.city(ip)
@@ -125,7 +126,7 @@ def get_ip_info(ip):
             'status': res.status_code == 200,
             'latency': latency
         }
-    except:
+    except Exception as e:
         return {
             'ip': ip,
             'status': False
@@ -138,11 +139,11 @@ if __name__ == "__main__":
 
     recordset = get_recordset(zone.id, recordset_name)
 
-    hk_ips = get_hk_ips()
-
     recordset_ips = get_recordset_ips(recordset)
 
-    proxy_ips = get_proxy_ips()
+    hk_ips = get_doh_ips("hk.921219.xyz")
+
+    proxy_ips = get_text_ips("https://ipdb.api.030101.xyz/?type=bestproxy&country=false")
 
     ips = filter_ips(hk_ips + recordset_ips + proxy_ips)
 
