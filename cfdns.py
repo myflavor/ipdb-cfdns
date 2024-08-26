@@ -70,18 +70,41 @@ def create_recordset(zone_id, name, records):
 
 
 def get_proxy_ips():
+    ips = []
     resp = requests.get("https://ipdb.api.030101.xyz/?type=bestproxy&country=false").text
-    ips = set()
     for ip in resp.split("\n"):
-        if len(ips) >= 256:
+        ips.append(ip)
+    return ips
+
+
+def get_hk_ips():
+    ips = []
+    resp = requests.get("https://doh.pub/dns-query?type=1&name=hk2.921219.xyz").json()
+    for answer in resp["Answer"]:
+        ip = answer["data"]
+        ips.append(ip)
+    return ips
+
+
+def get_recordset_ips(recordset):
+    ips = []
+    if recordset is not None:
+        for record in recordset.records:
+            ips.append(record)
+    return ips
+
+
+def filter_ips(ips):
+    ip_set = set()
+    for ip in ips:
+        if len(ip_set) >= 256:
             break
         organization = asn_reader.asn(ip).autonomous_system_organization
         if organization.startswith("Alibaba"):
             country = city_reader.city(ip).country.iso_code
             if country == "SG" or country == "HK":
-                ips.add(ip)
-    print(f'本次获取IP数量{len(ips)}个')
-    return ips
+                ip_set.add(ip)
+    return ip_set
 
 
 def get_ip_info(ip):
@@ -111,20 +134,24 @@ def get_ip_info(ip):
 
 if __name__ == "__main__":
 
-    proxy_ips = get_proxy_ips()
-
     zone = get_zone(zone_name)
 
     recordset = get_recordset(zone.id, recordset_name)
 
-    if recordset is not None:
-        for record in recordset.records:
-            proxy_ips.add(record)
+    hk_ips = get_hk_ips()
+
+    recordset_ips = get_recordset_ips(recordset)
+
+    proxy_ips = get_proxy_ips()
+
+    ips = filter_ips(hk_ips + recordset_ips + proxy_ips)
+
+    print(f'本次获取IP数量{len(ips)}个')
 
     ips_info = []
 
-    for proxy_ip in proxy_ips:
-        ips_info.append(get_ip_info(proxy_ip))
+    for ip in ips:
+        ips_info.append(get_ip_info(ip))
 
     best_ips_info = sorted([ip for ip in ips_info if ip['status']], key=lambda x: x['latency'])[:8]
 
