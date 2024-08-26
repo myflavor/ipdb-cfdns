@@ -95,6 +95,7 @@ def get_recordset_ips(recordset):
 
 
 def filter_ips(ips):
+    print(ips)
     ip_set = set()
     for ip in ips:
         if len(ip_set) >= 256:
@@ -145,7 +146,7 @@ if __name__ == "__main__":
 
     proxy_ips = get_text_ips("https://ipdb.api.030101.xyz/?type=bestproxy&country=false")
 
-    ips = filter_ips(hk_ips + recordset_ips + proxy_ips)
+    ips = filter_ips(recordset_ips + hk_ips + proxy_ips)
 
     print(f'本次获取IP数量{len(ips)}个')
 
