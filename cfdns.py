@@ -98,7 +98,7 @@ def filter_ips(ips):
     print(ips)
     ip_set = set()
     for ip in ips:
-        if len(ip_set) >= 256:
+        if len(ip_set) >= 32:
             break
         organization = asn_reader.asn(ip).autonomous_system_organization
         if organization.startswith("Alibaba"):
