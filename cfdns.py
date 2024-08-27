@@ -2,7 +2,7 @@
 
 import os
 from time import time_ns
-
+import ipaddress
 import requests
 from huaweicloudsdkcore.auth.credentials import BasicCredentials
 from huaweicloudsdkdns.v2 import *
@@ -76,14 +76,25 @@ def get_text_ips(url):
         ips.append(ip)
     return ips
 
-# 传入数组
-def get_doh_ips(names):
+
+def is_ipv4_address(str):
+    try:
+        ipaddress.IPv4Address(str)
+        return True
+    except Exception as e:
+        return False
+
+
+def get_doh_ips(name):
     ips = []
-    for name in names:
+    try:
         resp = requests.get(f"https://doh.pub/dns-query?type=1&name={name}").json()
         for answer in resp["Answer"]:
             ip = answer["data"]
-            ips.append(ip)
+            if is_ipv4_address(ip):
+                ips.append(ip)
+    except Exception as e:
+        print(f'域名 {name} 解析失败')
     return ips
 
 
@@ -96,16 +107,18 @@ def get_recordset_ips(recordset):
 
 
 def filter_ips(ips):
-    print(ips)
     ip_set = set()
     for ip in ips:
         if len(ip_set) >= 32:
             break
-        organization = asn_reader.asn(ip).autonomous_system_organization
-        if organization.startswith("Alibaba"):
-            country = city_reader.city(ip).country.iso_code
-            if country == "SG" or country == "HK":
-                ip_set.add(ip)
+        try:
+            organization = asn_reader.asn(ip).autonomous_system_organization
+            if organization.startswith("Alibaba"):
+                country = city_reader.city(ip).country.iso_code
+                if country == "SG" or country == "HK":
+                    ip_set.add(ip)
+        except Exception as e:
+            print(f'IP {ip} 过滤出错')
     return ip_set
 
 
@@ -141,14 +154,19 @@ if __name__ == "__main__":
 
     recordset = get_recordset(zone.id, recordset_name)
 
-    recordset_ips = get_recordset_ips(recordset)
-    #定义反代优选域名
-    domains = ["uu.zhongyoutc.com", "bestproxy.onecf.eu.org" , "ipdb.rr.nu" , "hk.uu8.us.kg" , "ip.wvw.mom"]
-    hk_ips = get_doh_ips(domains)
+    hk_ips = []
 
-    proxy_ips = get_text_ips("https://ipdb.api.030101.xyz/?type=bestproxy&country=false")
+    hk_ips += get_recordset_ips(recordset)
 
-    ips = filter_ips(recordset_ips + hk_ips + proxy_ips)
+    hk_ips += get_doh_ips("uu.zhongyoutc.com")
+    hk_ips += get_doh_ips("bestproxy.onecf.eu.org")
+    hk_ips += get_doh_ips("ipdb.rr.nu")
+    hk_ips += get_doh_ips("hk.uu8.us.kg")
+    hk_ips += get_doh_ips("ip.wvw.mom")
+
+    hk_ips += get_text_ips("https://ipdb.api.030101.xyz/?type=bestproxy&country=false")
+
+    ips = filter_ips(hk_ips)
 
     print(f'本次获取IP数量{len(ips)}个')
 
