@@ -76,13 +76,14 @@ def get_text_ips(url):
         ips.append(ip)
     return ips
 
-
-def get_doh_ips(name):
+# 传入数组
+def get_doh_ips(names):
     ips = []
-    resp = requests.get("https://doh.pub/dns-query?type=1&name=" + name).json()
-    for answer in resp["Answer"]:
-        ip = answer["data"]
-        ips.append(ip)
+    for name in names:
+        resp = requests.get(f"https://doh.pub/dns-query?type=1&name={name}").json()
+        for answer in resp["Answer"]:
+            ip = answer["data"]
+            ips.append(ip)
     return ips
 
 
@@ -141,8 +142,9 @@ if __name__ == "__main__":
     recordset = get_recordset(zone.id, recordset_name)
 
     recordset_ips = get_recordset_ips(recordset)
-
-    hk_ips = get_doh_ips("hk.921219.xyz")
+    #定义反代优选域名
+    domains = ["uu.zhongyoutc.com", "bestproxy.onecf.eu.org" , "ipdb.rr.nu" , "hk.uu8.us.kg" , "ip.wvw.mom"]
+    hk_ips = get_doh_ips(domains)
 
     proxy_ips = get_text_ips("https://ipdb.api.030101.xyz/?type=bestproxy&country=false")
 
